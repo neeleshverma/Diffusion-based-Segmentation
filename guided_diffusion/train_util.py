@@ -201,6 +201,11 @@ class TrainLoop:
             self.save()
 
     def run_step(self, batch, cond):
+        print("Batch shape :", batch.shape)
+        print("Cond shape :", cond.shape)
+
+        exit(0)
+
         batch=th.cat((batch, cond), dim=1)
 
         cond={}

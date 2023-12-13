@@ -7,7 +7,7 @@ sys.path.append("..")
 sys.path.append(".")
 from guided_diffusion import dist_util, logger
 from guided_diffusion.resample import create_named_schedule_sampler
-# from guided_diffusion.bratsloader import BRATSDataset
+from guided_diffusion.bratsloader import BRATSDataset
 from guided_diffusion.script_util import (
     model_and_diffusion_defaults,
     create_model_and_diffusion,
@@ -16,8 +16,20 @@ from guided_diffusion.script_util import (
 )
 import torch as th
 from guided_diffusion.train_util import TrainLoop
+from utils.datasets import ImageLabelDataset, make_transform
 # from visdom import Visdom
 # viz = Visdom(port=8850)
+
+
+def prepare_dataset(data_dir, image_size, num_images):
+    return ImageLabelDataset(
+        data_dir=data_dir,
+        resolution=image_size,
+        num_images=num_images,
+        transform=make_transform(
+            image_size
+        )
+    )
 
 def main():
     args = create_argparser().parse_args()
@@ -35,9 +47,16 @@ def main():
     schedule_sampler = create_named_schedule_sampler(args.schedule_sampler, diffusion,  maxt=1000)
 
     logger.log("creating data loader...")
-    # ds = BRATSDataset(args.data_dir, test_flag=False)
+    dataset = BRATSDataset(args.data_dir, test_flag=False)
+
+
+    # dataset = prepare_dataset(args.data_dir, args.image_size, args.num_images)
+
+    # image_dataloader = DataLoader(dataset, batch_size=args.batch_size, shuffle=True)
+
+
     datal= th.utils.data.DataLoader(
-        ds,
+        dataset,
         batch_size=args.batch_size,
         shuffle=True)
     data = iter(datal)
@@ -80,6 +99,7 @@ def create_argparser():
         resume_checkpoint='',#'"./results/pretrainedmodel.pt",
         use_fp16=False,
         fp16_scale_growth=1e-3,
+        num_images=-1
     )
     defaults.update(model_and_diffusion_defaults())
     parser = argparse.ArgumentParser()
